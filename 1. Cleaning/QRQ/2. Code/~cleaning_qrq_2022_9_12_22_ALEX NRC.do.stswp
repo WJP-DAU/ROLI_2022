@@ -24,360 +24,21 @@ if (inlist("`c(username)'", "nrodriguez")) {
 global path2data "${path2SP}/1. Data"
 global path2dos  "${path2SP}/2. Code"
 
+*Path 2dos: Path to do-files (Routines). This will include the importing, normalization from 2023
+global path2dos23 "${path2GH}\\2. Code"
 
-/*-------------------------------------------------------*/
-/* THIS FILE INCORPORATES ALSO THE RESPONDENTS FROM 2014 */
-/*-------------------------------------------------------*/
-/*---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-/*---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+*Path 2dos: Path to do-files (Routines). THESE ARE THE SAME ROUTINES AS 2024
+global path2dos  "C:\Users\nrodriguez\OneDrive - World Justice Project\Natalia\GitHub\ROLI_2024\1. Cleaning\QRQ\2. Code"
 
-/*----------------------*/
-/* I. Cleaning the data */
-/*----------------------*/
-/*-----------*/
-/* 1. Civil  */
-/*-----------*/
 
-import delimited using "$path2data/1. Original/CC long.csv"
-drop *_2021
-gen longitudinal=1
-order sg_id
-save "$path2data/1. Original/cc_final_long.dta", replace
 
-clear
-import delimited using "$path2data/1. Original/CC reg.csv"
-rename (cc_g34a cc_35g) (cc_q34a cc_q35g)
-gen longitudinal=0
+/*=================================================================================================================
+					I. Cleaning the data
+=================================================================================================================*/
+cls
+do "${path2dos23}\\Routines\\data_import_all.do"
 
-// Append the regular and the longitudinal databases
-append using "$path2data/1. Original/cc_final_long.dta"
-drop cc_leftout-cc_referral3_language ivstatus
-gen question="cc"
 
-* Check for experts without id
-count if sg_id==.
-
-rename sg_id id_original
-rename vlanguage language
-rename wjp_country country
-
-* Create ID
-egen id=concat(language longitudinal id_original), punct(_)
-egen id_alex=concat(question id), punct(_)
-drop id id_original
-
-/* These 3 lines are for incorporating 2021 data */
-gen year=2022
-gen regular=0
-drop if language=="Last_Year"
-
-order question year regular longitudinal id_alex language country wjp_login
-
-/* Drop new variables for Andrei added in 2017 (Not used for the Index) */
-drop cc_q17a cc_q17b cc_q18a cc_q18b
-
-
-/* Recoding question 26 */
-foreach var of varlist cc_q26a-cc_q26k {
-	replace `var'=. if `var'==99
-}
-
-/* Recoding questions */
-foreach var of varlist cc_q20a cc_q20b cc_q21 {
-	replace `var'=1 if `var'==0
-	replace `var'=2 if `var'==5
-	replace `var'=3 if `var'==25
-	replace `var'=4 if `var'==50
-	replace `var'=5 if `var'==75
-	replace `var'=6 if `var'==100
-}
-/* Changing 9 for missing */
-foreach var of varlist cc_q1- cc_q5e {
-	replace `var'=. if `var'==9
-}
-
-foreach var of varlist cc_q7a-cc_q25  {
-	replace `var'=. if `var'==9
-}
-
-foreach var of varlist cc_q27- cc_q40b{
-	replace `var'=. if `var'==9
-}
-
-/* Change names to match the MAP file and the GPP */
-
-drop if country=="Burundi"
-
-replace country="Congo, Rep." if country=="Republic of Congo"
-replace country="Korea, Rep." if country=="Republic of Korea"
-replace country="Egypt, Arab Rep." if country=="Egypt"
-replace country="Iran, Islamic Rep." if country=="Iran"
-replace country="St. Kitts and Nevis" if country=="Saint Kitts and Nevis"		
-replace country="St. Lucia" if country=="Saint Lucia"
-replace country="St. Vincent and the Grenadines" if country=="Saint Vincent and the Grenadines"
-replace country="Cote d'Ivoire" if country=="Ivory Coast"
-replace country="Congo, Dem. Rep." if country=="Democratic Republic of Congo"
-replace country="Gambia" if country=="The Gambia"
-
-replace country="Kyrgyz Republic" if country=="Kyrgyzstan"
-replace country="North Macedonia" if country=="Macedonia, FYR"
-replace country="Russian Federation" if country=="Russia"
-replace country="Venezuela, RB" if country=="Venezuela"
-
-save "$path2data/1. Original/cc_final.dta", replace
-erase "$path2data/1. Original/cc_final_long.dta"
-
-/*--------------*/
-/* 2. Criminal  */
-/*--------------*/
-
-clear
-import delimited using "$path2data/1. Original/CJ long.csv"
-drop *_2021
-gen longitudinal=1
-order sg_id
-drop cj_leftout-cj_referral3_language ivstatus
-save "$path2data/1. Original/cj_final_long.dta", replace
-
-clear
-import delimited using "$path2data/1. Original/CJ reg.csv"
-gen longitudinal=0
-drop cj_leftout-cj_referral3_language ivstatus
-
-// Append the regular and the longitudinal databases
-append using "$path2data/1. Original/cj_final_long.dta"
-gen question="cj"
-
-* Check for experts without id
-count if sg_id==.
-
-rename sg_id id_original
-rename vlanguage language
-rename wjp_country country
-
-* Create ID
-egen id=concat(language longitudinal id_original), punct(_)
-egen id_alex=concat(question id), punct(_)
-drop id id_original
-
-/* These 3 lines are for incorporating 2021 data */
-gen year=2022
-gen regular=0
-drop if language=="Last_Year"
-
-order question year regular longitudinal id_alex language country wjp_login
-
-/* Change 99 for missing */
-foreach var of varlist cj_q16a- cj_q21k cj_q27a cj_q27b cj_q37a-cj_q37d cj_q43a-cj_q43h  {
-	replace `var'=. if `var'==99
-}
-
-/* Changing 9 for missing */
-foreach var of varlist cj_q1- cj_q15 cj_q17 {
-	replace `var'=. if `var'==9
-}
-
-/* Recoding questions */
-foreach var of varlist cj_q22a-cj_q25c cj_q28 {
-	replace `var'=1 if `var'==0
-	replace `var'=2 if `var'==5
-	replace `var'=3 if `var'==25
-	replace `var'=4 if `var'==50
-	replace `var'=5 if `var'==75
-	replace `var'=6 if `var'==100
-}
-
-foreach var of varlist cj_q22a-cj_q36d cj_q38-cj_q42h {
-	replace `var'=. if `var'==9
-}
-
-/* Change names to match the MAP file and the GPP */
-
-drop if country=="Burundi"
-
-replace country="Congo, Rep." if country=="Republic of Congo"
-replace country="Korea, Rep." if country=="Republic of Korea"
-replace country="Egypt, Arab Rep." if country=="Egypt"
-replace country="Iran, Islamic Rep." if country=="Iran"
-replace country="St. Kitts and Nevis" if country=="Saint Kitts and Nevis"		
-replace country="St. Lucia" if country=="Saint Lucia"
-replace country="St. Vincent and the Grenadines" if country=="Saint Vincent and the Grenadines"
-replace country="Cote d'Ivoire" if country=="Ivory Coast"
-replace country="Congo, Dem. Rep." if country=="Democratic Republic of Congo"
-replace country="Gambia" if country=="The Gambia"
-
-replace country="Kyrgyz Republic" if country=="Kyrgyzstan"
-replace country="North Macedonia" if country=="Macedonia, FYR"
-replace country="Russian Federation" if country=="Russia"
-replace country="Venezuela, RB" if country=="Venezuela"
-
-save "$path2data/1. Original/cj_final.dta", replace
-erase "$path2data/1. Original/cj_final_long.dta"
-
-/*-----------*/
-/* 3. Labor  */
-/*-----------*/
-
-clear
-import delimited using "$path2data/1. Original/LB long.csv"
-drop *_2021
-gen longitudinal=1
-order sg_id
-drop lb_teach lb_leftout-lb_referral3_language ivstatus
-save "$path2data/1. Original/lb_final_long.dta", replace
-
-clear
-import delimited using "$path2data/1. Original/LB reg.csv" 
-
-gen longitudinal=0
-drop lb_teach lb_leftout-lb_referral3_language ivstatus
-
-// Append the regular and the longitudinal databases
-append using "$path2data/1. Original/lb_final_long.dta"
-gen question="lb"
-
-* Check for experts without id
-count if sg_id==.
-
-rename sg_id id_original
-rename vlanguage language
-rename wjp_country country
-
-* Create ID
-egen id=concat(language longitudinal id_original), punct(_)
-egen id_alex=concat(question id), punct(_)
-drop id id_original
-
-/* These 3 lines are for incorporating 2021 data */
-gen year=2022
-gen regular=0
-drop if language=="Last_Year"
-
-order question year regular longitudinal id_alex language country wjp_login
-
-/* Recoding questions */
-foreach var of varlist lb_q11a lb_q11b lb_q12 {
-	replace `var'=1 if `var'==0 
-	replace `var'=2 if `var'==5
-	replace `var'=3 if `var'==25
-	replace `var'=4 if `var'==50
-	replace `var'=5 if `var'==75
-	replace `var'=6 if `var'==100
-}
-
-/* Changing 9 for missing */
-foreach var of varlist lb_q1a- lb_q4d {
-	replace `var'=. if `var'==9
-}
-
-foreach var of varlist lb_q6a- lb_q28b {
-	replace `var'=. if `var'==9
-}
-
-/* Change names to match the MAP file and the GPP */
-
-drop if country=="Burundi"
-
-replace country="Congo, Rep." if country=="Republic of Congo"
-replace country="Korea, Rep." if country=="Republic of Korea"
-replace country="Egypt, Arab Rep." if country=="Egypt"
-replace country="Iran, Islamic Rep." if country=="Iran"
-replace country="St. Kitts and Nevis" if country=="Saint Kitts and Nevis"		
-replace country="St. Lucia" if country=="Saint Lucia"
-replace country="St. Vincent and the Grenadines" if country=="Saint Vincent and the Grenadines"
-replace country="Cote d'Ivoire" if country=="Ivory Coast"
-replace country="Congo, Dem. Rep." if country=="Democratic Republic of Congo"
-replace country="Gambia" if country=="The Gambia"
-
-replace country="Kyrgyz Republic" if country=="Kyrgyzstan"
-replace country="North Macedonia" if country=="Macedonia, FYR"
-replace country="Russian Federation" if country=="Russia"
-replace country="Venezuela, RB" if country=="Venezuela"
-
-save "$path2data/1. Original/lb_final.dta", replace
-erase "$path2data/1. Original/lb_final_long.dta"
-
-/*------------------*/
-/* 4. Public Health */
-/*------------------*/
-
-clear
-import delimited using "$path2data/1. Original/PH long.csv"
-drop *_2021
-gen longitudinal=1
-order sg_id
-drop ph_leftout-ph_referral3_language ivstatus
-save "$path2data/1. Original/ph_final_long.dta", replace
-
-clear
-import delimited using "$path2data/1. Original/PH reg.csv"
-drop ph_leftout-ph_referral3_language ivstatus
-gen longitudinal=0
-
-// Append the regular and the longitudinal databases
-append using "$path2data/1. Original/ph_final_long.dta"
-gen question="ph"
-
-* Check for experts without id
-count if sg_id==.
-
-rename sg_id id_original
-rename vlanguage language
-rename wjp_country country
-
-* Create ID
-egen id=concat(language longitudinal id_original), punct(_)
-egen id_alex=concat(question id), punct(_)
-drop id id_original
-
-/* These 3 lines are for incorporating 2021 data */
-gen year=2022
-gen regular=0
-drop if language=="Last_Year"
-
-order question year regular longitudinal id_alex language country wjp_login
-
-/* Recoding questions */
-foreach var of varlist ph_q5a ph_q5b ph_q5c ph_q5d {
-	replace `var'=1 if `var'==0
-	replace `var'=2 if `var'==5
-	replace `var'=3 if `var'==25
-	replace `var'=4 if `var'==50
-	replace `var'=5 if `var'==75
-	replace `var'=6 if `var'==100
-}
-
-/* Changing 9 for missing */
-foreach var of varlist ph_q1a- ph_q6g {
-	replace `var'=. if `var'==9
-}
-
-foreach var of varlist ph_q7- ph_q14 {
-	replace `var'=. if `var'==9
-}
-
-/* Change names to match the MAP file and the GPP */
-
-drop if country=="Burundi"
-
-replace country="Congo, Rep." if country=="Republic of Congo"
-replace country="Korea, Rep." if country=="Republic of Korea"
-replace country="Egypt, Arab Rep." if country=="Egypt"
-replace country="Iran, Islamic Rep." if country=="Iran"
-replace country="St. Kitts and Nevis" if country=="Saint Kitts and Nevis"		
-replace country="St. Lucia" if country=="Saint Lucia"
-replace country="St. Vincent and the Grenadines" if country=="Saint Vincent and the Grenadines"
-replace country="Cote d'Ivoire" if country=="Ivory Coast"
-replace country="Congo, Dem. Rep." if country=="Democratic Republic of Congo"
-replace country="Gambia" if country=="The Gambia"
-
-replace country="Kyrgyz Republic" if country=="Kyrgyzstan"
-replace country="North Macedonia" if country=="Macedonia, FYR"
-replace country="Russian Federation" if country=="Russia"
-replace country="Venezuela, RB" if country=="Venezuela"
-
-save "$path2data/1. Original/ph_final.dta", replace
-erase "$path2data/1. Original/ph_final_long.dta"
 
 /*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
 /*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
@@ -390,7 +51,7 @@ append using "$path2data/1. Original/cj_final.dta"
 append using "$path2data/1. Original/lb_final.dta"
 append using "$path2data/1. Original/ph_final.dta"
 
-save "$path2data/1. Original/qrq.dta", replace
+save "$path2data/1. Original/qrq_2022.dta", replace
 
 erase "$path2data/1. Original/cc_final.dta"
 erase "$path2data/1. Original/cj_final.dta"
@@ -403,7 +64,7 @@ erase "$path2data/1. Original/ph_final.dta"
 /*----------*/
 /* 1. Civil */
 /*----------*/
-use "$path2data/1. Original/qrq.dta", clear
+use "$path2data/1. Original/qrq_2022.dta", clear
 
 foreach var of varlist cc_q1- cc_q5e cc_q7a- cc_q40b {
 	gen `var'_norm=.
@@ -1213,7 +874,7 @@ drop if id_alex=="cj__1_."
 drop if id_alex=="lb__1_."
 drop if id_alex=="ph__1_."
 
-save "$path2data/1. Original/qrq.dta", replace
+save "$path2data/1. Original/qrq_2022.dta", replace
 
 /*----------------------------------------------*/
 /* VI. Merging with 2021 data and previous years */
@@ -1228,7 +889,7 @@ save "$path2data/1. Original/qrq_2021_login.dta", replace
 
 /* Responded longitudinal survey in 2022 */ 
 clear
-use "$path2data/1. Original/qrq.dta"
+use "$path2data/1. Original/qrq_2022.dta"
 keep wjp_login
 duplicates drop
 sort wjp_login
@@ -1263,7 +924,7 @@ erase "$path2data/1. Original/qrq_2021_login_unique.dta"
 
 /* Merging with 2021 data and older regular data*/
 clear
-use "$path2data/1. Original/qrq.dta"
+use "$path2data/1. Original/qrq_2022.dta"
 append using "$path2data/1. Original/qrq_2021.dta"
 *Observations are no longer longitudinal because the database we're appending only includes people that only answered in 2021 or before
 replace longitudinal=0 if year==2021 | year==2019
@@ -2638,7 +2299,7 @@ drop if id_alex=="cj_English_0_417" //Jordan
 drop if id_alex=="lb_English_0_518" //Jordan
 drop if id_alex=="ph_English_0_169" //Jordan
 
-*---- FIXED BY NRC: Originally labelled as "Jordan". These four edits are for Iran. The Map doesn't h
+*---- FIXED BY NRC: Originally labelled as "Jordan". These four edits are for Iran. The Map doesn't have these changes. 
 /*
 replace all_q1_norm=. if id_alex=="cc_English_1_424_2018_2019_2021" //Jordan
 replace all_q1_norm=. if id_alex=="cc_English_1_355_2019_2021" //Jordan
@@ -2647,7 +2308,6 @@ replace all_q1_norm=. if id_alex=="lb_English_1_283_2017_2018_2019_2021" //Jorda
 */
 
 *---- 
-
 
 replace all_q19_norm=. if id_alex=="cj_English_0_557_2014_2016_2017_2018_2019_2021" //Jordan
 replace all_q19_norm=. if id_alex=="cj_English_0_466_2014_2016_2017_2018_2019_2021" //Jordan
@@ -5010,7 +4670,7 @@ br question year country longitudinal id_alex total_score f_1 f_2 f_3 f_4 f_6 f_
 drop total_score_mean
 bysort country: egen total_score_mean=mean(total_score)
 
-save "$path2data/2. Final/qrq.dta", replace
+save "$path2data/2. Final/qrq_2022.dta", replace
 
 
 /*-----------------------------------------------------*/
@@ -5088,18 +4748,17 @@ drop total_score- total_score_mean
 drop cj_q43a_norm-cj_q43h_norm
 order wjp_password, last //cc_q6a_usd cc_q6a_gni 
 drop wjp_password
-save "$path2data/2. Final/qrq_country_averages.dta", replace
+save "$path2data/2. Final/qrq_country_averages_2022.dta", replace
+
+*Create scores
+do "C:\Users\nrodriguez\OneDrive - World Justice Project\Natalia\GitHub\ROLI_2024\1. Cleaning\QRQ\2. Code\Routines\scores.do"
+
+
+*Saving scores in 2024 folder for analysis
+save "C:\Users\nrodriguez\OneDrive - World Justice Project\Programmatic\Data Analytics\7. WJP ROLI\ROLI_2023\1. Cleaning\QRQ\1. Data\3. Final\qrq_country_averages_2022.dta", replace
+
 
 br
-
-
-/*-------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-/*-------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-
-
-
-
-
 
 
 
