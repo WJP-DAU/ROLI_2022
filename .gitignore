@@ -52,3 +52,5 @@ rsconnect/
 1. Cleaning/.DS_Store
 1. Cleaning/QRQ/.DS_Store
 .DS_Store
+*.stswp
+*.stswp

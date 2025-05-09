@@ -11,12 +11,17 @@ set more off, perm
 *--- Required packages:
 * NONE
 
+*--- Years of analysis
+global year_current "2022"
+global year_previous "2021"
+
+
 *--- Defining paths to SharePoint & your local Git Repo copy:
 
 *------ (a) Natalia Rodriguez:
 if (inlist("`c(username)'", "nrodriguez")) {
-	global path2SP "C:\Users\nrodriguez\OneDrive - World Justice Project\Programmatic\Data Analytics\7. WJP ROLI\ROLI_2022\1. Cleaning\QRQ"
-	global path2GH ""
+	global path2SP "C:\Users\nrodriguez\OneDrive - World Justice Project\Programmatic\Data Analytics\7. WJP ROLI\ROLI_${year_current}\1. Cleaning\QRQ"
+	global path2GH "C:\Users\nrodriguez\OneDrive - World Justice Project\Natalia\GitHub\ROLI_${year_current}\\1. Cleaning\QRQ"
 }
 
 
@@ -39,857 +44,53 @@ cls
 do "${path2dos22}\\Routines\\data_import_all.do"
 
 
-
-/*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-/*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-/*------------------------*/
-/* II. Appending the data */
-/*------------------------*/
+/*=================================================================================================================
+					II. Appending the data
+=================================================================================================================*/
 clear
-use "$path2data/1. Original/cc_final.dta"
-append using "$path2data/1. Original/cj_final.dta"
-append using "$path2data/1. Original/lb_final.dta"
-append using "$path2data/1. Original/ph_final.dta"
+use "${path2data}\\1. Original\cc_final.dta"
+append using "${path2data}\\1. Original\cj_final.dta"
+append using "${path2data}\\1. Original\lb_final.dta"
+append using "${path2data}\\1. Original\ph_final.dta"
 
-save "$path2data/1. Original/qrq_2022.dta", replace
+save "${path2data}\\1. Original\\qrq_${year_current}.dta", replace
 
 erase "$path2data/1. Original/cc_final.dta"
 erase "$path2data/1. Original/cj_final.dta"
 erase "$path2data/1. Original/lb_final.dta"
 erase "$path2data/1. Original/ph_final.dta"
 
-/*--------------------------*/
-/* III. Re-scaling the data */
-/*--------------------------*/
-/*----------*/
-/* 1. Civil */
-/*----------*/
-use "$path2data/1. Original/qrq_2022.dta", clear
+/*=================================================================================================================
+					III. Re-scaling the data
+=================================================================================================================*/
 
-foreach var of varlist cc_q1- cc_q5e cc_q7a- cc_q40b {
-	gen `var'_norm=.
-}
+do "${path2dos22}\\Routines\\normalization.do"
 
-/* Cases */
-replace cc_q1_norm=1 if cc_q1==1
-replace cc_q1_norm=0 if cc_q1==2 | cc_q1==3
+/*=================================================================================================================
+					IV. Creating variables common in various questionnaires
+=================================================================================================================*/
 
-replace cc_q15_norm=(cc_q15-1)/2
-
-/* Dummy  */
-replace cc_q12_norm=0 if cc_q12==2
-replace cc_q12_norm=1 if cc_q12==1
-replace cc_q23g_norm=0 if cc_q23g==. & question=="cc"
-replace cc_q23g_norm=1 if cc_q23g==1 & question=="cc"
-
-/* Likert 3 Values: Positive */
-# delimit;
-foreach var of varlist 
-	cc_q31a cc_q31b cc_q31c cc_q31d cc_q31e cc_q31f cc_q31g cc_q31h
-	cc_q33 cc_q38 {;
-	replace `var'_norm=(`var'-1)/2; 
-};
-# delimit cr;
-
-/* Likert 3 Values: Negative */
-replace cc_q25_norm=1-((cc_q25-1)/2)
-replace cc_q27_norm=1-((cc_q27-1)/2)
-
-/* Likert 4 Values: Positive */
-# delimit;
-foreach var of varlist 
-	cc_q2a cc_q2b cc_q2c cc_q2d cc_q2e 
-	cc_q5a cc_q5b cc_q5c cc_q5d cc_q5e
-	cc_q8
-	cc_q9a cc_q9b cc_q9c
-	cc_q10
-	cc_q11a cc_q11b cc_q11c
-	cc_q13
-	cc_q14a cc_q14b
-	cc_q16a cc_q16b cc_q16c cc_q16d cc_q16e cc_q16f cc_q16g
-	cc_q22a cc_q22b cc_q22c
-	cc_q24
-	cc_q29a cc_q29b cc_q29c
-	cc_q30a cc_q30b cc_q30c
-	cc_q32a cc_q32b cc_q32c cc_q32d cc_q32e cc_q32f cc_q32g cc_q32h cc_q32i cc_q32j cc_q32k cc_q32l
-	cc_q34a cc_q34b cc_q34c cc_q34d cc_q34e cc_q34f cc_q34g cc_q34h cc_q34i cc_q34j cc_q34k cc_q34l
-	cc_q35a cc_q35b cc_q35c cc_q35d cc_q35e cc_q35f cc_q35g
-	cc_q36a cc_q36b cc_q36c cc_q36d cc_q36e cc_q36f cc_q36g 
-	cc_q39a cc_q39b cc_q39c cc_q39d cc_q39e 
-	cc_q40a cc_q40b {;
-		replace `var'_norm=(`var'-1)/3; 
-};
-# delimit cr;
-
-/* Likert 4 Values: Negative */
-# delimit;
-foreach var of varlist 
-	cc_q2f
-	cc_q7a cc_q7b cc_q7c cc_q7d cc_q7e
-	cc_q19a cc_q19b cc_q19c cc_q19d cc_q19e cc_q19f cc_q19g cc_q19h cc_q19i cc_q19j cc_q19k cc_q19l
-	cc_q23a cc_q23b cc_q23c cc_q23d cc_q23e cc_q23f
-	cc_q28a cc_q28b cc_q28c cc_q28d cc_q28e cc_q28f
-	cc_q29d
-	cc_q36h 
-	cc_q37a cc_q37b cc_q37c cc_q37d cc_q37e {;
-		replace `var'_norm=1-((`var'-1)/3); 
-};
-# delimit cr;
-
-/* Likert 5 Values: Positive */
-# delimit;
-foreach var of varlist 
-	cc_q3a cc_q3b cc_q3c cc_q3d cc_q3e
-	cc_q4a cc_q4b cc_q4c cc_q4d cc_q4e  {;
-		replace `var'_norm=(`var'-1)/4; 
-};
-# delimit cr;
-
-/* Likert 6 Values: Positive */
-replace cc_q20a_norm=1 if cc_q20a==6
-replace cc_q20a_norm=0.75 if cc_q20a==5
-replace cc_q20a_norm=0.5 if cc_q20a==4
-replace cc_q20a_norm=0.25 if cc_q20a==3
-replace cc_q20a_norm=0.05 if cc_q20a==2
-replace cc_q20a_norm=0 if cc_q20a==1
-
-/* Likert 6 Values: Negative */
-replace cc_q20b_norm=0 if cc_q20b==6
-replace cc_q20b_norm=0.05 if cc_q20b==5
-replace cc_q20b_norm=0.25 if cc_q20b==4
-replace cc_q20b_norm=0.5 if cc_q20b==3
-replace cc_q20b_norm=0.75 if cc_q20b==2
-replace cc_q20b_norm=1 if cc_q20b==1
-
-replace cc_q21_norm=0 if cc_q21==6
-replace cc_q21_norm=0.05 if cc_q21==5
-replace cc_q21_norm=0.25 if cc_q21==4
-replace cc_q21_norm=0.5 if cc_q21==3
-replace cc_q21_norm=0.75 if cc_q21==2
-replace cc_q21_norm=1 if cc_q21==1
-
-/* Likert 10 Values: Negative */
-# delimit;
-foreach var of varlist 
-	cc_q26a cc_q26b cc_q26c cc_q26d cc_q26e cc_q26f cc_q26g cc_q26h cc_q26i cc_q26j cc_q26k {;
-		replace `var'_norm=1-((`var'-1)/9); 
-};
-# delimit cr;
-
-foreach var of varlist cc_q23a cc_q23b cc_q23c cc_q23d cc_q23e cc_q23f {
-		replace `var'_norm=1 if cc_q23g_norm==1 & `var'_norm==.
-}
-
-/*-------------*/
-/* 2. Criminal */
-/*-------------*/
-foreach var of varlist cj_q1- cj_q43h {
-	gen `var'_norm=.
-}
-
-/* Cases */
-gen alex=0 if cj_q38~=. 
-replace alex=1 if cj_q38==4
-bysort country: egen alex_co=mean(alex)
-replace cj_q38_norm=1-((cj_q38-1)/2) if alex_co<0.5
-replace cj_q38_norm=. if cj_q38==4
-drop alex_co alex
-
-replace cj_q8_norm=(cj_q8-1)/2
-replace cj_q9_norm=(cj_q9-1)/2
-replace cj_q14_norm=(cj_q14-1)
-
-/* Dummy  */
-replace cj_q12g_norm=0 if cj_q12g==. & question=="cj"
-replace cj_q12g_norm=1 if cj_q12g==1 & question=="cj"
-
-replace cj_q13g_norm=0 if cj_q13g==. & question=="cj"
-replace cj_q13g_norm=1 if cj_q13g==1 & question=="cj"
-
-/* Likert 4 Values: Positive */
-# delimit;
-foreach var of varlist 
-	cj_q3a cj_q3b cj_q3c
-	cj_q4
-	cj_q17
-	cj_q26
-	cj_q30a cj_q30b
-	cj_q35a cj_q35b cj_q35c cj_q35d cj_q35e
-	cj_q36a cj_q36b cj_q36c cj_q36d
-	cj_q39a cj_q39b cj_q39c cj_q39d cj_q39e cj_q39f cj_q39g cj_q39h cj_q39i cj_q39j cj_q39k cj_q39l
-	cj_q40a cj_q40b cj_q40c cj_q40d cj_q40e cj_q40f cj_q40g cj_q40h
-	cj_q41a cj_q41b cj_q41c cj_q41d cj_q41e cj_q41f cj_q41g {;
-		replace `var'_norm=(`var'-1)/3; 
-};
-# delimit cr;
-
-/* Likert 4 Values: Negative */
-# delimit;
-foreach var of varlist 
-	cj_q1
-	cj_q2
-	cj_q5
-	cj_q6a cj_q6b cj_q6c cj_q6d
-	cj_q7a cj_q7b cj_q7c cj_q7d 
-	cj_q10
-	cj_q11a cj_q11b
-	cj_q12a cj_q12b cj_q12c cj_q12d cj_q12e cj_q12f
-	cj_q13a cj_q13b cj_q13c cj_q13d cj_q13e cj_q13f
-	cj_q15
-	cj_q29a cj_q29b cj_q29c cj_q29d
-	cj_q31a cj_q31b cj_q31c cj_q31d cj_q31e cj_q31f cj_q31g cj_q31h cj_q31i
-	cj_q32a cj_q32b cj_q32c cj_q32d cj_q32e
-	cj_q33a cj_q33b cj_q33c cj_q33d cj_q33e 
-	cj_q34a cj_q34b cj_q34c cj_q34d cj_q34e 
-	cj_q41h
-	cj_q42a cj_q42b cj_q42c cj_q42d cj_q42e cj_q42f cj_q42g cj_q42h {;
-		replace `var'_norm=1-((`var'-1)/3); 
-};
-# delimit cr;
-
-/* Likert 5 Values: Positive */
-# delimit;
-foreach var of varlist 
-	cj_q27a cj_q27b {;
-		replace `var'_norm=(`var'-1)/4; 
-};
-# delimit cr;
-
-/* Likert 6 Values: Positive */
-# delimit;
-foreach var of varlist 
-	cj_q22a cj_q22b cj_q22d cj_q22e
-	cj_q23a cj_q23b cj_q23c cj_q23d cj_q23e
-	cj_q24a {;
-		replace `var'_norm=1 if `var'==6;
-		replace `var'_norm=0.75 if `var'==5;
-		replace `var'_norm=0.5 if `var'==4;
-		replace `var'_norm=0.25 if `var'==3;
-		replace `var'_norm=0.05 if `var'==2;
-		replace `var'_norm=0 if `var'==1; 
-};
-# delimit cr;
-
-/* Likert 6 Values: Negative */
-# delimit;
-foreach var of varlist 
-	cj_q22c
-	cj_q24b cj_q24c
-	cj_q25a cj_q25b cj_q25c
-	cj_q28 {;
-		replace `var'_norm=0 if `var'==6;
-		replace `var'_norm=0.05 if `var'==5;
-		replace `var'_norm=0.25 if `var'==4;
-		replace `var'_norm=0.5 if `var'==3;
-		replace `var'_norm=0.75 if `var'==2;
-		replace `var'_norm=1 if `var'==1; 
-};
-# delimit cr;
-
-/* Likert 10 Values: Positive. Added by Natalia (before, the normalization was wrong */
-foreach var of varlist cj_q43a cj_q43b cj_q43c cj_q43d cj_q43e cj_q43f cj_q43g cj_q43h {
-		replace `var'_norm=(`var'-1)/9
-}
-
-/* Likert 10 Values: Negative */
-# delimit;
-foreach var of varlist 
-	cj_q16a cj_q16b cj_q16c cj_q16d cj_q16e cj_q16f cj_q16g cj_q16h cj_q16i cj_q16j cj_q16k cj_q16l cj_q16m
- 	cj_q18a cj_q18b cj_q18c cj_q18d cj_q18e
-	cj_q19a cj_q19b cj_q19c cj_q19d cj_q19e cj_q19f cj_q19g
-	cj_q20a cj_q20b cj_q20c cj_q20d cj_q20e cj_q20f cj_q20g cj_q20h cj_q20i cj_q20j cj_q20k cj_q20l cj_q20m cj_q20n cj_q20o cj_q20p
-	cj_q21a cj_q21b cj_q21c cj_q21d cj_q21e cj_q21f cj_q21g cj_q21h cj_q21i cj_q21j cj_q21k 
-	cj_q37a cj_q37b cj_q37c cj_q37d {;
-		replace `var'_norm=1-((`var'-1)/9); 
-};
-# delimit cr;
-
-foreach var of varlist cj_q12a cj_q12b cj_q12c cj_q12d cj_q12e cj_q12f {
-		replace `var'_norm=1 if cj_q12g_norm==1 & `var'_norm==.
-}
-
-foreach var of varlist cj_q13a cj_q13b cj_q13c cj_q13d cj_q13e cj_q13f {
-		replace `var'_norm=1 if cj_q13g_norm==1 & `var'_norm==.
-}
-
-/*----------*/
-/* 3. Labor */
-/*----------*/
-foreach var of varlist lb_q1a-lb_q4d lb_q6a-lb_q28b {
-	gen `var'_norm=.
-}
-
-/* Cases */
-replace lb_q8_norm=(lb_q8-1)/2
-
-replace lb_q9_norm=0 if lb_q9==1 | lb_q9==4
-replace lb_q9_norm=0.5 if lb_q9==2
-replace lb_q9_norm=1 if lb_q9==3
-
-replace lb_q22_norm=1-((lb_q22-1)/2)
-
-/* Dummy  */
-replace lb_q13g_norm=0 if lb_q13g==. & question=="lb"
-replace lb_q13g_norm=1 if lb_q13g==1 & question=="lb"
-
-replace lb_q16g_norm=0 if lb_q16g==. & question=="lb"
-replace lb_q16g_norm=1 if lb_q16g==1 & question=="lb"
-
-/* Likert 3 Values: Positive */
-# delimit;
-foreach var of varlist 
-	lb_q15a lb_q15b lb_q15c lb_q15d lb_q15e {;
-	replace `var'_norm=(`var'-1)/2; 
-};
-# delimit cr;
-
-/* Likert 3 Values: Negative */
-# delimit;
-foreach var of varlist 
-	lb_q20a lb_q20b lb_q20c lb_q20d lb_q20e lb_q20f lb_q20g lb_q20h {;
-	replace `var'_norm=1-((`var'-1)/2); 
-};
-# delimit cr;
-
-/* Likert 4 Values: Positive */
-# delimit;
-foreach var of varlist 
-	lb_q1a lb_q1b lb_q1c lb_q1d lb_q1e 
-	lb_q4a lb_q4b lb_q4c lb_q4d
-	lb_q7
-	lb_q14
-	lb_q18a lb_q18b lb_q18c 
-	lb_q19a lb_q19b lb_q19c lb_q19d
-	lb_q21a lb_q21b lb_q21c lb_q21d lb_q21e lb_q21f lb_q21g lb_q21h lb_q21i lb_q21j
-	lb_q23a lb_q23b lb_q23c lb_q23d lb_q23e lb_q23f lb_q23g
-	lb_q24a lb_q24b lb_q24c lb_q24d lb_q24e lb_q24f lb_q24g lb_q24h
-	lb_q25a lb_q25b lb_q25c lb_q25d lb_q25e lb_q25f lb_q25g lb_q25h lb_q25i 
-	lb_q27a lb_q27b lb_q27c lb_q27d lb_q27e 
-	lb_q28a lb_q28b {;
-		replace `var'_norm=(`var'-1)/3; 
-};
-# delimit cr;
-
-/* Likert 4 Values: Negative */
-# delimit;
-foreach var of varlist 
-	lb_q1f
-	lb_q6a lb_q6b lb_q6c lb_q6d lb_q6e
-	lb_q10a lb_q10b lb_q10c lb_q10d lb_q10e lb_q10f lb_q10g lb_q10h lb_q10i lb_q10j lb_q10k lb_q10l
-	lb_q13a lb_q13b lb_q13c lb_q13d lb_q13e lb_q13f
-	lb_q16a lb_q16b lb_q16c lb_q16d lb_q16e lb_q16f
-	lb_q17a lb_q17b lb_q17c lb_q17d lb_q17e
-	lb_q18d
-	lb_q25j
-	lb_q26a lb_q26b lb_q26c lb_q26d lb_q26e lb_q26f lb_q26g {;
-		replace `var'_norm=1-((`var'-1)/3); 
-};
-# delimit cr;
-
-/* Likert 5 Values: Positive */
-# delimit;
-foreach var of varlist 
-	lb_q2a lb_q2b lb_q2c lb_q2d
-	lb_q3a lb_q3b lb_q3c lb_q3d {;
-		replace `var'_norm=(`var'-1)/4; 
-};
-# delimit cr;
-
-/* Likert 6 Values: Positive */
-# delimit;
-foreach var of varlist 
-	lb_q11a {;
-		replace `var'_norm=1 if `var'==6;
-		replace `var'_norm=0.75 if `var'==5;
-		replace `var'_norm=0.5 if `var'==4;
-		replace `var'_norm=0.25 if `var'==3;
-		replace `var'_norm=0.05 if `var'==2;
-		replace `var'_norm=0 if `var'==1; 
-};
-# delimit cr;
-
-/* Likert 6 Values: Negative */
-# delimit;
-foreach var of varlist 
-	lb_q11b
-	lb_q12 {;
-		replace `var'_norm=0 if `var'==6;
-		replace `var'_norm=0.05 if `var'==5;
-		replace `var'_norm=0.25 if `var'==4;
-		replace `var'_norm=0.5 if `var'==3;
-		replace `var'_norm=0.75 if `var'==2;
-		replace `var'_norm=1 if `var'==1; 
-};
-# delimit cr;
-
-foreach var of varlist lb_q13a lb_q13b lb_q13c lb_q13d lb_q13e lb_q13f {
-		replace `var'_norm=1 if lb_q13g_norm==1 & `var'_norm==.
-}
-
-foreach var of varlist lb_q16a lb_q16b lb_q16c lb_q16d lb_q16e lb_q16f {
-		replace `var'_norm=1 if lb_q16g_norm==1 & `var'_norm==.
-}
-
-/*------------------*/
-/* 4. Public Health */
-/*------------------*/
-foreach var of varlist ph_q1a - ph_q14{
-	gen `var'_norm=.
-}
-
-/* Cases */
-replace ph_q2_norm=(ph_q2-1)/2
-replace ph_q7_norm=1-((ph_q7-1)/2)
-
-replace ph_q3_norm=1 if ph_q3==1
-replace ph_q3_norm=0 if ph_q3==2 | ph_q3==3
-
-/* Dummy  */
-replace ph_q6h_norm=0 if ph_q6h==. & question=="PH"
-replace ph_q6h_norm=1 if ph_q6h==1 & question=="PH"
-
-/* Likert 4 Values: Positive */
-# delimit;
-foreach var of varlist 
-	ph_q1a ph_q1b ph_q1c 
-	ph_q4a ph_q4b ph_q4c
-	ph_q9a ph_q9b ph_q9c 
-	ph_q10a ph_q10b ph_q10c ph_q10d ph_q10e ph_q10f
-	ph_q13
-	ph_q14 {;
-		replace `var'_norm=(`var'-1)/3; 
-};
-# delimit cr;
-
-/* Likert 4 Values: Negative */
-# delimit;
-foreach var of varlist 
-	ph_q1d
-	ph_q6a ph_q6b ph_q6c ph_q6d ph_q6e ph_q6f ph_q6g
-	ph_q8a ph_q8b ph_q8c ph_q8d ph_q8e ph_q8f ph_q8g
-	ph_q9d
-	ph_q11a ph_q11b ph_q11c
-	ph_q12a ph_q12b ph_q12c ph_q12d ph_q12e {;
-		replace `var'_norm=1-((`var'-1)/3); 
-};
-# delimit cr;
-
-/* Likert 6 Values: Positive */
-# delimit;
-foreach var of varlist 
-	ph_q5a {;
-		replace `var'_norm=1 if `var'==6;
-		replace `var'_norm=0.75 if `var'==5;
-		replace `var'_norm=0.5 if `var'==4;
-		replace `var'_norm=0.25 if `var'==3;
-		replace `var'_norm=0.05 if `var'==2;
-		replace `var'_norm=0 if `var'==1; 
-};
-# delimit cr;
-
-/* Likert 6 Values: Negative */
-# delimit;
-foreach var of varlist 
-	ph_q5b ph_q5c ph_q5d {;
-		replace `var'_norm=0 if `var'==6;
-		replace `var'_norm=0.05 if `var'==5;
-		replace `var'_norm=0.25 if `var'==4;
-		replace `var'_norm=0.5 if `var'==3;
-		replace `var'_norm=0.75 if `var'==2;
-		replace `var'_norm=1 if `var'==1; 
-};
-# delimit cr;
-
-foreach var of varlist ph_q6a ph_q6b ph_q6c ph_q6d ph_q6e ph_q6f ph_q6g {
-		replace `var'_norm=1 if ph_q6h_norm==1 & `var'_norm==.
-}
-
-
-/*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-/*-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-/*---------------------------------------------------------*/
-/* IV. Creating variables common in various questionnaires */
-/*---------------------------------------------------------*/
-
-gen all_q1=cc_q36h_norm if question=="cc"
-replace all_q1=cj_q41h_norm if question=="cj"
-replace all_q1=lb_q25j_norm if question=="lb"
-
-gen all_q2=cc_q35a_norm if question=="cc"
-replace all_q2=cj_q40a_norm if question=="cj"
-replace all_q2=lb_q24a_norm if question=="lb"
-
-gen all_q3=cc_q35d_norm if question=="cc"
-replace all_q3=cj_q40d_norm if question=="cj"
-replace all_q3=lb_q24d_norm if question=="lb"
-
-gen all_q4=cc_q35b_norm if question=="cc"
-replace all_q4=cj_q40b_norm if question=="cj"
-replace all_q4=lb_q24b_norm if question=="lb"
-
-gen all_q5=cc_q26k_norm if question=="cc"
-replace all_q5=cj_q20m_norm if question=="cj"
-
-gen all_q6=cc_q21_norm if question=="cc"
-replace all_q6=lb_q12_norm if question=="lb"
-
-gen all_q7=cc_q35c_norm if question=="cc"
-replace all_q7=cj_q40c_norm if question=="cj"
-replace all_q7=lb_q24c_norm if question=="lb"
-
-gen all_q8=cc_q36d_norm if question=="cc"
-replace all_q8=cj_q41d_norm if question=="cj"
-replace all_q8=lb_q25d_norm if question=="lb"
-
-gen all_q9=cc_q35e_norm if question=="cc"
-replace all_q9=cj_q40e_norm if question=="cj"
-replace all_q9=lb_q24e_norm if question=="lb"
-
-gen all_q10=cc_q35f_norm if question=="cc"
-replace all_q10=cj_q40f_norm if question=="cj"
-replace all_q10=lb_q24f_norm if question=="lb"
-
-gen all_q11=cj_q40g_norm if question=="cj"
-replace all_q11=lb_q24g_norm if question=="lb"
-
-gen all_q12=cc_q35g_norm if question=="cc"
-replace all_q12=cj_q40h_norm if question=="cj"
-replace all_q12=lb_q24h_norm if question=="lb"
-
-gen all_q13=cj_q42a_norm if question=="cj"
-replace all_q13=lb_q26a_norm if question=="lb"
-
-gen all_q14=cc_q34e_norm if question=="cc"
-replace all_q14=cj_q39e_norm if question=="cj"
-
-gen all_q15=cc_q34h_norm if question=="cc"
-replace all_q15=cj_q39h_norm if question=="cj"
-
-gen all_q16=cc_q34i_norm if question=="cc"
-replace all_q16=cj_q39i_norm if question=="cj"
-
-gen all_q17=cj_q42b_norm if question=="cj"
-replace all_q17=lb_q26b_norm if question=="lb"
-
-gen all_q18=cc_q34j_norm if question=="cc"
-replace all_q18=cj_q39j_norm if question=="cj"
-
-gen all_q19=cc_q34a_norm if question=="cc"
-replace all_q19=cj_q39a_norm if question=="cj"
-
-gen all_q20=cc_q34k_norm if question=="cc"
-replace all_q20=cj_q39k_norm if question=="cj"
-replace all_q20=lb_q25h_norm if question=="lb"
-
-gen all_q21=cc_q34l_norm if question=="cc"
-replace all_q21=cj_q39l_norm if question=="cj"
-replace all_q21=lb_q25i_norm if question=="lb"
-
-gen all_q22=cc_q36a_norm if question=="cc"
-replace all_q22=cj_q41a_norm if question=="cj"
-replace all_q22=lb_q25a_norm if question=="lb"
-
-gen all_q23=cc_q36f_norm if question=="cc"
-replace all_q23=cj_q41f_norm if question=="cj"
-replace all_q23=lb_q25f_norm if question=="lb"
-
-gen all_q24=cc_q36b_norm if question=="cc"
-replace all_q24=cj_q41b_norm if question=="cj"
-replace all_q24=lb_q25b_norm if question=="lb"
-
-gen all_q25=cc_q36c_norm if question=="cc"
-replace all_q25=cj_q41c_norm if question=="cj"
-replace all_q25=lb_q25c_norm if question=="lb"
-
-gen all_q26=cc_q36e_norm if question=="cc"
-replace all_q26=cj_q41e_norm if question=="cj"
-replace all_q26=lb_q25e_norm if question=="lb"
-
-gen all_q27=cc_q36g_norm if question=="cc"
-replace all_q27=cj_q41g_norm if question=="cj"
-replace all_q27=lb_q25g_norm if question=="lb"
-
-gen all_q28=cc_q20b_norm if question=="cc"
-replace all_q28=lb_q11b_norm if question=="lb"
-
-gen all_q29=cc_q34f_norm if question=="cc"
-replace all_q29=cj_q39f_norm if question=="cj"
-
-gen all_q30=cc_q34g_norm if question=="cc"
-replace all_q30=cj_q39g_norm if question=="cj"
-
-gen all_q31=cc_q34c_norm if question=="cc"
-replace all_q31=cj_q39c_norm if question=="cj"
-
-gen all_q32=cc_q34d_norm if question=="cc"
-replace all_q32=cj_q39d_norm if question=="cj"
-
-gen all_q33=cc_q32a_norm if question=="cc"
-replace all_q33=cj_q35a_norm if question=="cj"
-replace all_q33=lb_q21a_norm if question=="lb"
-replace all_q33=ph_q10a_norm if question=="ph"
-
-gen all_q34=cc_q32b_norm if question=="cc"
-replace all_q34=cj_q35c_norm if question=="cj"
-replace all_q34=lb_q21b_norm if question=="lb"
-
-gen all_q35=cc_q32c_norm if question=="cc"
-replace all_q35=cj_q35b_norm if question=="cj"
-replace all_q35=lb_q21c_norm if question=="lb"
-replace all_q35=ph_q10b_norm if question=="ph"
-
-gen all_q36=cc_q32d_norm if question=="cc"
-replace all_q36=lb_q21d_norm if question=="lb"
-replace all_q36=ph_q10c_norm if question=="ph"
-
-gen all_q37=cc_q32e_norm if question=="cc"
-replace all_q37=lb_q21f_norm if question=="lb"
-replace all_q37=ph_q10e_norm if question=="ph"
-
-gen all_q38=cc_q32f_norm if question=="cc"
-replace all_q38=cj_q35d_norm if question=="cj"
-replace all_q38=lb_q21g_norm if question=="lb"
-
-gen all_q39=cc_q32g_norm if question=="cc"
-replace all_q39=cj_q35e_norm if question=="cj"
-replace all_q39=lb_q21h_norm if question=="lb"
-replace all_q39=ph_q10f_norm if question=="ph"
-
-gen all_q40=cc_q31a_norm if question=="cc"
-replace all_q40=lb_q20a_norm if question=="lb"
-
-gen all_q41=cc_q31b_norm if question=="cc"
-replace all_q41=lb_q20b_norm if question=="lb"
-
-gen all_q42=cc_q31c_norm if question=="cc"
-replace all_q42=lb_q20c_norm if question=="lb"
-
-gen all_q43=cc_q31d_norm if question=="cc"
-replace all_q43=lb_q20d_norm if question=="lb"
-
-gen all_q44=cc_q31e_norm if question=="cc"
-replace all_q44=lb_q20e_norm if question=="lb"
-
-gen all_q45=cc_q31f_norm if question=="cc"
-replace all_q45=lb_q20f_norm if question=="lb"
-
-gen all_q46=cc_q31g_norm if question=="cc"
-replace all_q46=lb_q20g_norm if question=="lb"
-
-gen all_q47=cc_q31h_norm if question=="cc"
-replace all_q47=lb_q20h_norm if question=="lb"
-
-gen all_q48=cc_q30a_norm if question=="cc"
-replace all_q48=lb_q19b_norm if question=="lb"
-
-gen all_q49=cc_q30b_norm if question=="cc"
-replace all_q49=lb_q19c_norm if question=="lb"
-
-gen all_q50=cc_q30c_norm if question=="cc"
-replace all_q50=lb_q19d_norm if question=="lb"
-
-gen all_q51=cc_q20a_norm if question=="cc"
-replace all_q51=lb_q11a_norm if question=="lb"
-
-gen all_q52=cc_q15_norm if question=="cc"
-replace all_q52=ph_q2_norm if question=="ph"
-
-gen all_q53=cc_q38_norm if question=="cc"
-replace all_q53=lb_q8_norm if question=="lb"
-
-gen all_q54=cc_q1_norm if question=="cc"
-replace all_q54=ph_q3_norm if question=="ph"
-
-gen all_q55=cc_q29d_norm if question=="cc"
-replace all_q55=lb_q18d_norm if question=="lb"
-
-gen all_q56=cc_q28f_norm if question=="cc"
-replace all_q56=lb_q17d_norm if question=="lb"
-
-gen all_q57=cc_q7a_norm if question=="cc"
-replace all_q57=lb_q6a_norm if question=="lb"
-
-gen all_q58=cc_q7b_norm if question=="cc"
-replace all_q58=lb_q6b_norm if question=="lb"
-
-gen all_q59=cc_q7c_norm if question=="cc"
-replace all_q59=lb_q6d_norm if question=="lb"
-
-gen all_q60=cc_q19j_norm if question=="cc"
-replace all_q60=cj_q20k_norm if question=="cj"
-replace all_q60=lb_q10j_norm if question=="lb"
-
-gen all_q61=cc_q7d_norm if question=="cc"
-replace all_q61=lb_q6e_norm if question=="lb"
-
-gen all_q62=cc_q32k_norm if question=="cc"
-replace all_q62=lb_q21i_norm if question=="lb"
-
-gen all_q63=cc_q32l_norm if question=="cc"
-replace all_q63=lb_q21j_norm if question=="lb"
-
-gen all_q64=cc_q19l_norm if question=="cc"
-replace all_q64=lb_q10l_norm if question=="lb"
-
-gen all_q65=cc_q8_norm if question=="cc"
-replace all_q65=lb_q7_norm if question=="lb"
-
-gen all_q66=cc_q19b_norm if question=="cc"
-replace all_q66=lb_q10b_norm if question=="lb"
-
-gen all_q67=cc_q19c_norm if question=="cc"
-replace all_q67=lb_q10c_norm if question=="lb"
-
-gen all_q68=cc_q19d_norm if question=="cc"
-replace all_q68=lb_q10d_norm if question=="lb"
-
-gen all_q69=cc_q19e_norm if question=="cc"
-replace all_q69=lb_q10e_norm if question=="lb"
-
-gen all_q70=cc_q19f_norm if question=="cc"
-replace all_q70=lb_q10f_norm if question=="lb"
-
-gen all_q71=cc_q5a_norm if question=="cc"
-replace all_q71=lb_q4a_norm if question=="lb"
-
-gen all_q72=cc_q5b_norm if question=="cc"
-replace all_q72=lb_q4b_norm if question=="lb"
-
-gen all_q73=cc_q19a_norm if question=="cc"
-replace all_q73=lb_q10a_norm if question=="lb"
-
-gen all_q74=cc_q19i_norm if question=="cc"
-replace all_q74=lb_q10i_norm if question=="lb"
-
-gen all_q75=cc_q19k_norm if question=="cc"
-replace all_q75=lb_q10k_norm if question=="lb"
-
-gen all_q76=cc_q23a_norm if question=="cc"
-replace all_q76=lb_q13a_norm if question=="lb"
-
-gen all_q77=cc_q23b_norm if question=="cc"
-replace all_q77=lb_q13b_norm if question=="lb"
-
-gen all_q78=cc_q23c_norm if question=="cc"
-replace all_q78=lb_q13c_norm if question=="lb"
-
-gen all_q79=cc_q23d_norm if question=="cc"
-replace all_q79=lb_q13d_norm if question=="lb"
-
-gen all_q80=cc_q23e_norm if question=="cc"
-replace all_q80=lb_q13e_norm if question=="lb"
-
-gen all_q81=cc_q23f_norm if question=="cc"
-replace all_q81=lb_q13f_norm if question=="lb"
-
-gen all_q82=cc_q19h_norm if question=="cc"
-replace all_q82=lb_q10h_norm if question=="lb"
-
-gen all_q83=cc_q19j_norm if question=="cc"
-replace all_q83=lb_q10j_norm if question=="lb"
-
-gen all_q84=cc_q3a_norm if question=="cc"
-replace all_q84=lb_q2a_norm if question=="lb"
-
-gen all_q85=cc_q3b_norm if question=="cc"
-replace all_q85=lb_q2b_norm if question=="lb"
-
-gen all_q86=cc_q4a_norm if question=="cc"
-replace all_q86=lb_q3a_norm if question=="lb"
-
-gen all_q87=cc_q4b_norm if question=="cc"
-replace all_q87=lb_q3b_norm if question=="lb"
-
-gen all_q88=cc_q19g_norm if question=="cc"
-replace all_q88=lb_q10g_norm if question=="lb"
-
-gen all_q89=cc_q5c_norm if question=="cc"
-replace all_q89=lb_q4c_norm if question=="lb"
-
-gen all_q90=cc_q3c_norm if question=="cc"
-replace all_q90=lb_q2c_norm if question=="lb"
-
-gen all_q91=cc_q4c_norm if question=="cc"
-replace all_q91=lb_q3c_norm if question=="lb"
-
-gen all_q92=cc_q24_norm if question=="cc"
-replace all_q92=lb_q14_norm if question=="lb"
-
-gen all_q93=cc_q37a_norm if question=="cc"
-replace all_q93=cj_q42e_norm if question=="cj"
-replace all_q93=lb_q26c_norm if question=="lb"
-
-gen all_q94=cc_q37b_norm if question=="cc"
-replace all_q94=cj_q42f_norm if question=="cj"
-replace all_q94=lb_q26d_norm if question=="lb"
-
-gen all_q95=cc_q37c_norm if question=="cc"
-replace all_q95=cj_q42g_norm if question=="cj"
-replace all_q95=lb_q26e_norm if question=="lb"
-
-gen all_q96=cc_q37d_norm if question=="cc"
-replace all_q96=cj_q42h_norm if question=="cj"
-replace all_q96=lb_q26f_norm if question=="lb"
-
-gen all_q97=cc_q37e_norm if question=="cc"
-replace all_q97=lb_q26g_norm if question=="lb"
-
-gen all_q98=cc_q39a_norm if question=="cc"
-replace all_q98=lb_q27a_norm if question=="lb"
-
-gen all_q99=cc_q39b_norm if question=="cc"
-replace all_q99=lb_q27b_norm if question=="lb"
-
-gen all_q100=cc_q39c_norm if question=="cc"
-replace all_q100=lb_q27c_norm if question=="lb"
-
-gen all_q101=cc_q39d_norm if question=="cc"
-replace all_q101=lb_q27d_norm if question=="lb"
-
-gen all_q102=cc_q39e_norm if question=="cc"
-replace all_q102=lb_q27e_norm if question=="lb"
-
-gen all_q103=cc_q40a_norm if question=="cc"
-replace all_q103=lb_q28a_norm if question=="lb"
-
-gen all_q104=cc_q40b_norm if question=="cc"
-replace all_q104=lb_q28b_norm if question=="lb"
-
-gen all_q105=cc_q34b_norm if question=="cc"
-replace all_q105=cj_q39b_norm if question=="cj"
-replace all_q105=lb_q21e_norm if question=="lb"
-
-foreach var of varlist all_q1- all_q105 {
-	rename `var' `var'_norm
-}
+do "${path2dos22}/Routines/common_q.do"
 
 sort country question id_alex
 
-drop if id_alex=="cc__0_."
-drop if id_alex=="cj__0_."
-drop if id_alex=="lb__0_."
-drop if id_alex=="ph__0_."
-drop if id_alex=="cc__1_."
-drop if id_alex=="cj__1_."
-drop if id_alex=="lb__1_."
-drop if id_alex=="ph__1_."
+save "$path2data\1. Original\qrq_${year_current}.dta", replace
 
-save "$path2data/1. Original/qrq_2022.dta", replace
 
 /*----------------------------------------------*/
 /* VI. Merging with 2021 data and previous years */
 /*----------------------------------------------*/
 /* Responded in 2021 */
 clear
-use "$path2data/1. Original/qrq_original_2021.dta"
+use "$path2data/1. Original/qrq_original_${year_previous}.dta"
 keep wjp_login
 duplicates drop
 sort wjp_login
-save "$path2data/1. Original/qrq_2021_login.dta", replace
+save "$path2data/1. Original/qrq_${year_previous}_login.dta", replace
 
 /* Responded longitudinal survey in 2022 */ 
 clear
-use "$path2data/1. Original/qrq_2022.dta"
+use "$path2data/1. Original/qrq_${year_current}.dta"
 keep wjp_login
 duplicates drop
 sort wjp_login
@@ -897,18 +98,18 @@ save "$path2data/1. Original/qrq_login.dta", replace
 
 /* Only answered in 2021 (and not in 2022) (Login) */
 clear
-use "$path2data/1. Original/qrq_2021_login.dta"
+use "$path2data/1. Original/qrq_${year_previous}_login.dta"
 merge 1:1 wjp_login using "$path2data/1. Original/qrq_login.dta"
 keep if _merge==1
 drop _merge
 sort wjp_login
-save "$path2data/1. Original/qrq_2021_login_unique.dta", replace 
+save "$path2data/1. Original/qrq_${year_previous}_login_unique.dta", replace 
 
 /* Only answered in 2021 (and not in 2022) (Full data) */
 clear
-use "$path2data/1. Original/qrq_original_2021.dta"
+use "$path2data/1. Original/qrq_original_${year_previous}.dta"
 sort wjp_login
-merge m:1 wjp_login using "$path2data/1. Original/qrq_2021_login_unique.dta"
+merge m:1 wjp_login using "$path2data/1. Original/qrq_${year_previous}_login_unique.dta"
 keep if _merge==3
 drop _merge
 gen aux="2021"
@@ -916,16 +117,16 @@ egen id_alex_1=concat(id_alex aux), punct(_)
 replace id_alex=id_alex_1
 drop id_alex_1 aux
 sort wjp_login
-save "$path2data/1. Original/qrq_2021.dta", replace
+save "$path2data/1. Original/qrq_${year_previous}.dta", replace
 
-erase "$path2data/1. Original/qrq_2021_login.dta"
+erase "$path2data/1. Original/qrq_${year_previous}_login.dta"
 erase "$path2data/1. Original/qrq_login.dta"
-erase "$path2data/1. Original/qrq_2021_login_unique.dta"
+erase "$path2data/1. Original/qrq_${year_previous}_login_unique.dta"
 
 /* Merging with 2021 data and older regular data*/
 clear
-use "$path2data/1. Original/qrq_2022.dta"
-append using "$path2data/1. Original/qrq_2021.dta"
+use "$path2data/1. Original/qrq_${year_current}.dta"
+append using "$path2data/1. Original/qrq_${year_previous}.dta"
 *Observations are no longer longitudinal because the database we're appending only includes people that only answered in 2021 or before
 replace longitudinal=0 if year==2021 | year==2019
 drop total_score total_n f_1* f_2* f_3* f_4* f_6* f_7* f_8* N total_score_mean total_score_sd outlier outlier_CO
@@ -1101,67 +302,16 @@ drop if outlier==1 & N>20
 
 sort country id_alex
 
-/* 5. Factor scores */
-egen f_1_2=rowmean(all_q1_norm all_q2_norm all_q20_norm all_q21_norm)
-egen f_1_3=rowmean(all_q2_norm all_q3_norm cc_q25_norm all_q4_norm all_q5_norm all_q6_norm all_q7_norm all_q8_norm)
-egen f_1_4=rowmean(cc_q33_norm all_q9_norm cj_q38_norm cj_q36c_norm cj_q8_norm)
-egen f_1_5=rowmean(all_q52_norm all_q53_norm all_q93_norm all_q10_norm all_q11_norm all_q12_norm cj_q36b_norm cj_q36a_norm cj_q9_norm cj_q8_norm)
-egen f_1_6=rowmean(all_q13_norm all_q14_norm all_q15_norm all_q16_norm all_q17_norm cj_q10_norm all_q18_norm all_q94_norm all_q19_norm all_q20_norm all_q21_norm)
-egen f_1_7=rowmean(all_q23_norm all_q27_norm all_q22_norm all_q24_norm all_q25_norm all_q26_norm all_q8_norm)
-egen f_1=rowmean(f_1_2 f_1_3 f_1_4 f_1_5 f_1_6 f_1_7)
+********************************************************
+				 /* 4. Factor scores */
+********************************************************
 
-egen f_2_1=rowmean(cc_q27_norm all_q97_norm ph_q5a_norm ph_q5b_norm ph_q7_norm cc_q28a_norm cc_q28b_norm cc_q28c_norm cc_q28d_norm all_q56_norm lb_q17e_norm lb_q17c_norm ph_q8d_norm lb_q17b_norm ph_q8a_norm ph_q8b_norm ph_q8c_norm ph_q8e_norm ph_q8f_norm ph_q8g_norm ph_q9d_norm ph_q11a_norm ph_q11b_norm ph_q11c_norm ph_q12a_norm ph_q12b_norm ph_q12c_norm ph_q12d_norm ph_q12e_norm all_q54_norm all_q55_norm all_q95_norm)
-egen f_2_2=rowmean(all_q57_norm all_q58_norm all_q59_norm all_q60_norm cc_q26h_norm cc_q28e_norm lb_q6c_norm cj_q32b_norm all_q28_norm all_q6_norm)
-egen f_2_3=rowmean(cj_q32c_norm cj_q32d_norm all_q61_norm cj_q31a_norm cj_q31b_norm cj_q34a_norm cj_q34b_norm cj_q34c_norm cj_q34d_norm cj_q34e_norm cj_q16j_norm cj_q18a_norm)
-egen f_2_4=rowmean(all_q96_norm)
-egen f_2=rowmean(f_2_1 f_2_2 f_2_3 f_2_4)
-
-egen f_3_1=rowmean(all_q33_norm all_q34_norm all_q35_norm all_q36_norm all_q37_norm all_q38_norm cc_q32h_norm cc_q32i_norm)
-egen f_3_2=rowmean(cc_q9b_norm cc_q39a_norm cc_q39b_norm cc_q39b_norm cc_q39c_norm cc_q39e_norm all_q40_norm all_q41_norm all_q42_norm all_q43_norm all_q44_norm all_q45_norm all_q46_norm all_q47_norm)
-egen f_3_3=rowmean(all_q13_norm all_q14_norm all_q15_norm all_q16_norm all_q17_norm cj_q10_norm all_q18_norm all_q94_norm all_q19_norm all_q20_norm all_q21_norm all_q19_norm all_q31_norm all_q32_norm all_q14_norm cc_q9a_norm cc_q11b_norm cc_q32j_norm all_q105_norm)
-egen f_3_4=rowmean(cc_q9c_norm cc_q40a_norm cc_q40b_norm)
-egen f_3=rowmean(f_3_1 f_3_2 f_3_3 f_3_4)
-
-egen f_4_1=rowmean(all_q76_norm lb_q16a_norm ph_q6a_norm cj_q12a_norm all_q77_norm lb_q16b_norm ph_q6b_norm cj_q12b_norm all_q78_norm lb_q16c_norm ph_q6c_norm cj_q12c_norm all_q79_norm lb_q16d_norm ph_q6d_norm cj_q12d_norm all_q80_norm lb_q16e_norm ph_q6e_norm cj_q12e_norm all_q81_norm lb_q16f_norm ph_q6f_norm cj_q12f_norm)
-egen f_4_2=rowmean(cj_q11a_norm cj_q11b_norm cj_q31e_norm cj_q42c_norm cj_q42d_norm cj_q10_norm)
-egen f_4_3=rowmean(cj_q22d_norm cj_q22b_norm cj_q25a_norm cj_q31c_norm cj_q22e_norm cj_q6a_norm cj_q6b_norm cj_q6c_norm cj_q29a_norm cj_q29b_norm cj_q42c_norm cj_q42d_norm cj_q22a_norm cj_q1_norm cj_q2_norm cj_q11a_norm cj_q22c_norm cj_q3a_norm cj_q3b_norm cj_q3c_norm cj_q19b_norm cj_q19c_norm cj_q4_norm cj_q21a_norm cj_q21b_norm cj_q21c_norm cj_q21d_norm cj_q21f_norm)
-egen f_4_4=rowmean(all_q13_norm all_q14_norm all_q15_norm all_q16_norm all_q17_norm cj_q10_norm all_q18_norm all_q94_norm all_q19_norm all_q20_norm all_q21_norm)
-egen f_4_5=rowmean(all_q29_norm all_q30_norm)
-egen f_4_6=rowmean(cj_q31f_norm cj_q31g_norm cj_q42c_norm cj_q42d_norm)
-egen f_4_7=rowmean(all_q19_norm all_q31_norm all_q32_norm all_q14_norm)
-egen f_4_8=rowmean(lb_q16a_norm lb_q16b_norm lb_q16c_norm lb_q16d_norm lb_q16e_norm lb_q16f_norm lb_q23a_norm lb_q23b_norm lb_q23c_norm lb_q23d_norm lb_q23e_norm lb_q23f_norm lb_q23g_norm)
-egen f_4=rowmean(f_4_1 f_4_2 f_4_3 f_4_4 f_4_5 f_4_6 f_4_7 f_4_8)
-
-egen f_6_1=rowmean(lb_q8_norm lb_q9_norm lb_q22_norm lb_q15a_norm lb_q15b_norm lb_q15c_norm lb_q15d_norm lb_q15e_norm lb_q18a_norm lb_q18b_norm lb_q18c_norm cc_q1_norm cc_q29a_norm cc_q29b_norm cc_q29c_norm ph_q3_norm ph_q4a_norm ph_q4b_norm ph_q4c_norm ph_q9a_norm ph_q9b_norm ph_q9c_norm)
-egen f_6_2=rowmean(all_q54_norm all_q55_norm cc_q28a_norm cc_q28b_norm cc_q28c_norm cc_q28d_norm all_q56_norm lb_q17e_norm lb_q17c_norm ph_q8d_norm lb_q17b_norm ph_q8a_norm ph_q8b_norm ph_q8c_norm ph_q8e_norm ph_q8f_norm ph_q8g_norm ph_q9d_norm ph_q11a_norm ph_q11b_norm ph_q11c_norm ph_q12a_norm ph_q12b_norm ph_q12c_norm ph_q12d_norm ph_q12e_norm)
-egen f_6_3=rowmean(lb_q2d_norm lb_q3d_norm all_q62_norm all_q63_norm)
-egen f_6_4=rowmean(all_q48_norm all_q49_norm all_q50_norm lb_q19a_norm)
-egen f_6_5=rowmean(cc_q10_norm cc_q11a_norm cc_q16a_norm cc_q14a_norm cc_q14b_norm cc_q16b_norm cc_q16c_norm cc_q16d_norm cc_q16e_norm cc_q16f_norm cc_q16g_norm)
-egen f_6=rowmean(f_6_1 f_6_2 f_6_3 f_6_4 f_6_5)
-
-egen f_7_1=rowmean(all_q92_norm cj_q26_norm all_q75_norm all_q65_norm cc_q22a_norm cc_q22b_norm cc_q22c_norm cc_q12_norm all_q74_norm all_q75_norm all_q69_norm all_q70_norm all_q71_norm all_q72_norm)
-egen f_7_2=rowmean(all_q76_norm all_q77_norm all_q78_norm all_q79_norm all_q80_norm all_q81_norm all_q82_norm)
-egen f_7_3=rowmean(all_q57_norm all_q58_norm all_q59_norm all_q83_norm cc_q26h_norm cc_q28e_norm lb_q6c_norm all_q51_norm all_q28_norm)
-egen f_7_4=rowmean(all_q6_norm cc_q11a_norm all_q3_norm all_q4_norm all_q7_norm)
-egen f_7_5=rowmean(all_q84_norm all_q85_norm cc_q13_norm all_q88_norm cc_q26a_norm)
-egen f_7_6=rowmean(cc_q26b_norm all_q86_norm all_q87_norm)
-egen f_7_7=rowmean(all_q89_norm all_q59_norm all_q90_norm all_q91_norm cc_q14a_norm cc_q14b_norm)
-egen f_7=rowmean(f_7_1 f_7_2 f_7_3 f_7_4 f_7_5 f_7_6 f_7_7)
-
-egen f_8_1=rowmean(cj_q16a_norm cj_q16b_norm cj_q16c_norm cj_q16e_norm cj_q16f_norm cj_q16g_norm cj_q16h_norm cj_q16i_norm cj_q16j_norm cj_q18a_norm cj_q18d_norm cj_q25a_norm)
-egen f_8_2=rowmean(cj_q27a_norm cj_q27b_norm cj_q7a_norm cj_q7b_norm cj_q7c_norm cj_q20a_norm cj_q20b_norm cj_q20e_norm)
-egen f_8_3=rowmean(cj_q21a_norm cj_q21e_norm cj_q21g_norm cj_q21h_norm cj_q28_norm)
-egen f_8_4=rowmean(cj_q12a_norm cj_q12b_norm cj_q12c_norm cj_q12d_norm cj_q12e_norm cj_q12f_norm cj_q20o_norm)
-egen f_8_5=rowmean(cj_q32c_norm cj_q32d_norm cj_q31a_norm cj_q31b_norm cj_q34a_norm cj_q34b_norm cj_q34c_norm cj_q34d_norm cj_q34e_norm cj_q16j_norm cj_q18a_norm cj_q18d_norm cj_q32b_norm cj_q20k_norm)
-egen f_8_6=rowmean(cj_q40b_norm cj_q40c_norm cj_q20m_norm)
-egen f_8_7=rowmean(cj_q22d_norm cj_q22b_norm cj_q25a_norm cj_q31c_norm cj_q22e_norm cj_q6a_norm cj_q6b_norm cj_q6c_norm cj_q29a_norm cj_q29b_norm cj_q42c_norm cj_q42d_norm cj_q22a_norm cj_q1_norm cj_q2_norm cj_q11a_norm cj_q22c_norm cj_q3a_norm cj_q3b_norm cj_q3c_norm cj_q19b_norm cj_q19c_norm cj_q4_norm cj_q21a_norm cj_q21b_norm cj_q21c_norm cj_q21d_norm cj_q21f_norm)
-
-egen f_8=rowmean(f_8_1 f_8_2 f_8_3 f_8_4 f_8_5 f_8_6 f_8_7)
+qui do "${path2dos}/Routines/scores.do"
 
 
 *----- Saving original dataset BEFORE adjustments
 
-save "C:\Users\nrodriguez\OneDrive - World Justice Project\Programmatic\Data Analytics\8. Data\QRQ\QRQ_2022_raw.dta", replace
+save "C:\Users\nrodriguez\OneDrive - World Justice Project\Programmatic\Data Analytics\8. Data\QRQ\QRQ_${year_current}_raw.dta", replace
 
 
 /* Adjustments */
@@ -4670,7 +3820,7 @@ br question year country longitudinal id_alex total_score f_1 f_2 f_3 f_4 f_6 f_
 drop total_score_mean
 bysort country: egen total_score_mean=mean(total_score)
 
-save "$path2data/2. Final/qrq_2022.dta", replace
+save "$path2data/3. Final/qrq_${year_current}.dta", replace
 
 
 /*-----------------------------------------------------*/
@@ -4721,7 +3871,7 @@ drop  aux_cc-tag
 
 *----- Saving original dataset AFTER adjustments
 
-save "C:\Users\nrodriguez\OneDrive - World Justice Project\Programmatic\Data Analytics\8. Data\QRQ\QRQ_2022_clean.dta", replace
+save "C:\Users\nrodriguez\OneDrive - World Justice Project\Programmatic\Data Analytics\8. Data\QRQ\QRQ_${year_current}_clean.dta", replace
 
 
 /*-------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
@@ -4748,14 +3898,14 @@ drop total_score- total_score_mean
 drop cj_q43a_norm-cj_q43h_norm
 order wjp_password, last //cc_q6a_usd cc_q6a_gni 
 drop wjp_password
-save "$path2data/2. Final/qrq_country_averages_2022.dta", replace
+save "$path2data/3. Final/qrq_country_averages_${year_current}.dta", replace
 
 *Create scores
 do "C:\Users\nrodriguez\OneDrive - World Justice Project\Natalia\GitHub\ROLI_2024\1. Cleaning\QRQ\2. Code\Routines\scores.do"
 
 
 *Saving scores in 2024 folder for analysis
-save "C:\Users\nrodriguez\OneDrive - World Justice Project\Programmatic\Data Analytics\7. WJP ROLI\ROLI_2023\1. Cleaning\QRQ\1. Data\3. Final\qrq_country_averages_2022.dta", replace
+save "C:\Users\nrodriguez\OneDrive - World Justice Project\Programmatic\Data Analytics\7. WJP ROLI\ROLI_2023\1. Cleaning\QRQ\1. Data\3. Final\qrq_country_averages_${year_current}.dta", replace
 
 
 br
