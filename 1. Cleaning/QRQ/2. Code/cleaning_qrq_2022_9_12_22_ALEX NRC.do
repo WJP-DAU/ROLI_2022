@@ -3898,13 +3898,15 @@ drop total_score- total_score_mean
 drop cj_q43a_norm-cj_q43h_norm
 order wjp_password, last //cc_q6a_usd cc_q6a_gni 
 drop wjp_password
-save "$path2data/3. Final/qrq_country_averages_${year_current}.dta", replace
+
 
 *Create scores
 do "C:\Users\nrodriguez\OneDrive - World Justice Project\Natalia\GitHub\ROLI_2024\1. Cleaning\QRQ\2. Code\Routines\scores.do"
 
+*Saving scores in 2022 folder for analysis
+save "$path2data/3. Final/qrq_country_averages_${year_current}.dta", replace
 
-*Saving scores in 2024 folder for analysis
+*Saving scores in 2023 folder for analysis
 save "C:\Users\nrodriguez\OneDrive - World Justice Project\Programmatic\Data Analytics\7. WJP ROLI\ROLI_2023\1. Cleaning\QRQ\1. Data\3. Final\qrq_country_averages_${year_current}.dta", replace
 
 
