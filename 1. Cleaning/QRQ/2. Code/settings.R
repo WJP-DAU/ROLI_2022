@@ -39,10 +39,11 @@ p_load(char = c(
 if (Sys.info()["user"] == "santiagopardo") {
   
   path2EU <- paste0("/Users/santiagopardo/OneDrive - World Justice Project/EU Subnational")
-  path2DA <- paste0("/Users/santiagopardo/OneDrive - World Justice Project/Data Analytics")
+  path2DA <- paste0("/Users/santiagopardo/OneDrive - World Justice Project/Data Analytics/7. WJP ROLI/ROLI_2022")
   
 } else {
-  "INSERT PATH"
+  path2EU <- paste0("")
+  path2DA <- paste0("/Users/nrodriguez/OneDrive - World Justice Project/Programmatic/Data Analytics/7. WJP ROLI/ROLI_2022")
 }
 
 ## +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

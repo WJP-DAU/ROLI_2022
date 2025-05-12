@@ -149,6 +149,8 @@ replace country="Kyrgyz Republic" if country=="Kyrgyzstan"
 replace country="North Macedonia" if country=="Macedonia, FYR"
 replace country="Russian Federation" if country=="Russia"
 replace country="Venezuela, RB" if country=="Venezuela"
+replace country="Czechia" if country=="Czech Republic"
+replace country="Turkiye" if country=="Turkey"
 
 /*
 /* Merging with Cost of Lawyers 2021 clean data for new countries */

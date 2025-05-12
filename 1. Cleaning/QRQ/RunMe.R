@@ -44,15 +44,30 @@ for (mod in modules){
 # Suffix p = remove too positive values, n = remove too negative values
 
 # Load QRQ scenarios
-raw_qrq_data  <- load_scenario("1. Data/2. Scenarios/qrq_country_averages_s0.dta", "scores_raw")
-qrq_s1        <- load_scenario("1. Data/2. Scenarios/qrq_country_averages_s1.dta", "scores_s1")
-qrq_s2        <- load_scenario("1. Data/2. Scenarios/qrq_country_averages_s2.dta", "scores_s2")
-qrq_s3_n      <- load_scenario("1. Data/2. Scenarios/qrq_country_averages_s3_n.dta", "scores_s3_n")
-qrq_s3_p      <- load_scenario("1. Data/2. Scenarios/qrq_country_averages_s3_p.dta", "scores_s3_p")
-qrq_s4_n      <- load_scenario("1. Data/2. Scenarios/qrq_country_averages_s4_n.dta", "scores_s4_n")
-qrq_s4_p      <- load_scenario("1. Data/2. Scenarios/qrq_country_averages_s4_p.dta", "scores_s4_p")
+raw_qrq_data  <- load_scenario(file.path(path2DA,
+                                         "1. Cleaning","QRQ","1. Data/2. Scenarios/qrq_country_averages_s0.dta"),
+                               "scores_raw")
+qrq_s1        <- load_scenario(file.path(path2DA,
+                                         "1. Cleaning","QRQ","1. Data/2. Scenarios/qrq_country_averages_s1.dta"),
+                               "scores_s1")
+qrq_s2        <- load_scenario(file.path(path2DA,
+                                         "1. Cleaning","QRQ","1. Data/2. Scenarios/qrq_country_averages_s2.dta"),
+                               "scores_s2")
+qrq_s3_n      <- load_scenario(file.path(path2DA,
+                                         "1. Cleaning","QRQ","1. Data/2. Scenarios/qrq_country_averages_s3_n.dta"),
+                               "scores_s3_n")
+qrq_s3_p      <- load_scenario(file.path(path2DA,
+                                         "1. Cleaning","QRQ","1. Data/2. Scenarios/qrq_country_averages_s3_p.dta"),
+                               "scores_s3_p")
+qrq_s4_n      <- load_scenario(file.path(path2DA,
+                                         "1. Cleaning","QRQ","1. Data/2. Scenarios/qrq_country_averages_s4_n.dta"),
+                               "scores_s4_n")
+qrq_s4_p      <- load_scenario(file.path(path2DA,
+                                         "1. Cleaning","QRQ","1. Data/2. Scenarios/qrq_country_averages_s4_p.dta"),
+                               "scores_s4_p")
 
-qrq_country_counts <- read_dta("1. Data/2. Scenarios/country_counts_s0.dta") %>%
+qrq_country_counts <- read_dta(file.path(path2DA,
+                                         "1. Cleaning","QRQ","1. Data/2. Scenarios/country_counts_s0.dta")) %>%
   select(country, total_counts)
 
 # Combine scenarios into one long dataset
@@ -69,10 +84,12 @@ qrq_scenarios <- raw_qrq_data %>%
 
 # Load benchmark: long experts' direction (internal benchmark)
 
-qrq_long_2023 <- read_dta("1. Data/3. Final/qrq_long_2023_country_averages.dta") %>%
+qrq_long_2023 <- read_dta(file.path(path2DA,
+                                    "1. Cleaning","QRQ","1. Data/3. Final/qrq_long_2023_country_averages.dta")) %>%
   select(country, f_1 = f_1_2023, f_2 = f_2_2023, f_3 = f_3_2023, f_4 = f_4_2023, f_5 = f_5_2023, f_6 = f_6_2023, f_7 = f_7_2023, f_8 = f_8_2023, ROLI = ROLI_2023) %>%
   pivot_longer(cols = !c(country), names_to = "variables", values_to = "long_2023")
-qrq_long_2024 <- read_dta("1. Data/3. Final/qrq_long_2024_country_averages.dta") %>%
+qrq_long_2024 <- read_dta(file.path(path2DA,
+                                    "1. Cleaning","QRQ","1. Data/3. Final/qrq_long_2024_country_averages.dta")) %>%
   select(country, f_1 = f_1_2024, f_2 = f_2_2024, f_3 = f_3_2024, f_4 = f_4_2024, f_5 = f_5_2024, f_6 = f_6_2024, f_7 = f_7_2024, f_8 = f_8_2024, ROLI = ROLI_2024) %>%
   pivot_longer(cols = !c(country), names_to = "variables", values_to = "long_2024")
 
@@ -87,8 +104,12 @@ qrq_benchmark <- qrq_long_2023 %>%
 ### Scores 2023 and 2024 ------------------------------------------------------------------------------------------------
 
 # Load official QRQ scores
-qrq_scores_2023 <- load_scenario("1. Data/3. Final/qrq_country_averages_2023.dta", "scores_2023")
-qrq_scores_2024 <- load_scenario("1. Data/3. Final/qrq_country_averages_2024.dta", "scores_2024")
+qrq_scores_2023 <- load_scenario(file.path(path2DA,
+                                           "1. Cleaning","QRQ","1. Data/3. Final/qrq_country_averages_2023.dta"),
+                                 "scores_2023")
+qrq_scores_2024 <- load_scenario(file.path(path2DA,
+                                           "1. Cleaning","QRQ","1. Data/3. Final/qrq_country_averages_2024.dta"),
+                                 "scores_2024")
 
 qrq_scores_change <- qrq_scores_2023 %>%
   left_join(qrq_scores_2024, by = c("country", "variables")) %>%
